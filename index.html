@@ -18,42 +18,83 @@
 
   <meta charset="UTF-8">
   <meta content="IE=Edge" http-equiv="X-UA-Compatible">
-  <meta name="description" content="Flutter project for Decrypt Android.">
+  <meta name="description" content="日志解压工具">
 
   <!-- iOS meta tags & icons -->
-  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black">
-  <meta name="apple-mobile-web-app-title" content="DecryptAndroid">
+  <meta name="apple-mobile-web-app-title" content="decrypt">
   <link rel="apple-touch-icon" href="icons/Icon-192.png">
 
   <!-- Favicon -->
   <link rel="icon" type="image/png" href="favicon.png"/>
 
-  <title>decryptandroid</title>
+  <title>decrypt</title>
   <link rel="manifest" href="manifest.json">
+  <style>
+    body{
+      background:rgb(255, 241, 219);
+    }
 
-  <script>
-    // The value below is injected by flutter build, do not touch.
-    const serviceWorkerVersion = "2531343523";
-  </script>
-  <!-- This script adds the flutter initialization JS code -->
-  <script src="flutter.js" defer></script>
+    .loading {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      margin: 0;
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      -ms-transform: translate(-50%, -50%);
+      transform: translate(-50%, -50%);
+    }
+
+    .loader {
+      display: block;
+      position: relative;
+      width: 6px;
+      height: 10px;
+      animation: rectangle infinite 1s ease-in-out -0.2s;
+      background-color: #000;
+    }
+
+    .loader:before,
+    .loader:after {
+      position: absolute;
+      width: 6px;
+      height: 10px;
+      content: "";
+      background-color: #000;
+    }
+
+    .loader:before {
+      left: -14px;
+      animation: rectangle infinite 1s ease-in-out -0.4s;
+    }
+
+    .loader:after {
+      right: -14px;
+      animation: rectangle infinite 1s ease-in-out;
+    }
+
+    @keyframes rectangle {
+      0%,
+      80%,
+      100% {
+        height: 20px;
+        box-shadow: 0 0 #000;
+      }
+      40% {
+        height: 30px;
+        box-shadow: 0 -20px #000;
+      }
+    }
+  </style>
 </head>
 <body>
-  <script>
-    window.addEventListener('load', function(ev) {
-      // Download main.dart.js
-      _flutter.loader.loadEntrypoint({
-        serviceWorker: {
-          serviceWorkerVersion: serviceWorkerVersion,
-        },
-        onEntrypointLoaded: function(engineInitializer) {
-          engineInitializer.initializeEngine().then(function(appRunner) {
-            appRunner.runApp();
-          });
-        }
-      });
-    });
-  </script>
+<div class="loading">
+  <div class="loader"></div>
+</div>
+  <script src="flutter_bootstrap.js" async></script>
 </body>
 </html>

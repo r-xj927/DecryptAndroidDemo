@@ -1,11 +1,11 @@
 {
-    "name": "decryptandroid",
-    "short_name": "decryptandroid",
+    "name": "decrypt",
+    "short_name": "decrypt",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",
     "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
+    "description": "日志解压工具",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [
