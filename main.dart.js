@@ -38762,7 +38762,7 @@ A.abi.prototype={
 $0(){return this.a.f=!1},
 $S:0}
 A.abk.prototype={
-$0(){this.a.Iw("assets/DecryptLog.exe")
+$0(){this.a.Iw("assets/assets/DecryptLog.exe")
 A.jN(this.b,!1).r5(null)},
 $S:0}
 A.abo.prototype={
@@ -38778,7 +38778,7 @@ A.abg.prototype={
 $0(){return this.a.r=!1},
 $S:0}
 A.abn.prototype={
-$0(){this.a.Iw("assets/DecryptLog.dmg")
+$0(){this.a.Iw("assets/assets/DecryptLog.dmg")
 A.jN(this.b,!1).r5(null)},
 $S:0}
 A.abf.prototype={
