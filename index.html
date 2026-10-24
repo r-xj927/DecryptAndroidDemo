@@ -12,89 +12,334 @@
     * https://developer.mozilla.org/en-US/docs/Web/HTML/Element/base
 
     This is a placeholder for base href that will be replaced by the value of
-    the `--base-href` argument provided to `flutter build`.
+    the `--base-href` argument provided by `flutter build`.
   -->
   <base href="/DecryptAndroidDemo/">
 
   <meta charset="UTF-8">
   <meta content="IE=Edge" http-equiv="X-UA-Compatible">
   <meta name="description" content="日志解压工具">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 
   <!-- iOS meta tags & icons -->
   <meta name="mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black">
-  <meta name="apple-mobile-web-app-title" content="decrypt">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="日志解密助手">
   <link rel="apple-touch-icon" href="icons/Icon-192.png">
 
   <!-- Favicon -->
   <link rel="icon" type="image/png" href="favicon.png"/>
 
-  <title>decrypt</title>
+  <title>日志解密助手</title>
   <link rel="manifest" href="manifest.json">
   <style>
-    body{
-      background:rgb(255, 241, 219);
+    /* ------------------------------------------------------------------
+       首屏加载界面：与 Flutter 应用内的「浅色液态玻璃 + 极光背景」保持一致
+       品牌渐变 #6366F1 -> #8B5CF6，文本 #1E293B / #64748B
+       ------------------------------------------------------------------ */
+    html, body {
+      height: 100%;
+      margin: 0;
+      padding: 0;
     }
 
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "PingFang SC",
+        "Hiragino Sans GB", "Microsoft YaHei", "Segoe UI", Roboto, sans-serif;
+      color: #1E293B;
+      background: linear-gradient(135deg, #F3F5FD 0%, #FAF8FE 52%, #F1F9FC 100%);
+      overflow: hidden;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ---- 暗夜黑主题：首帧即应用深色，避免刷新时闪白 ---- */
+    body.theme-dark {
+      color: #E6EAF2;
+      background: linear-gradient(135deg, #0B0F19 0%, #121826 52%, #0A0E16 100%);
+    }
+
+    body.theme-dark .panel {
+      background: rgba(22, 29, 43, .62);
+      border-color: rgba(57, 69, 92, .9);
+      box-shadow: 0 18px 50px rgba(0, 0, 0, .45),
+                  0 2px 8px rgba(0, 0, 0, .30);
+    }
+
+    body.theme-dark .title { color: #E6EAF2; }
+    body.theme-dark .subtitle { color: #9AA6BC; }
+    body.theme-dark .bar { background: rgba(99, 102, 241, .22); }
+    body.theme-dark .aurora { display: none; }
+
+    /* ---- 极简白主题：纯白底，无极光光斑 ---- */
+    body.theme-minimal {
+      background: #FFFFFF;
+    }
+
+    body.theme-minimal .aurora { display: none; }
+
+    /* ---- 极光光斑（呼应 App 内 AuroraBackground） ---- */
+    .aurora {
+      position: fixed;
+      inset: 0;
+      overflow: hidden;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .aurora span {
+      position: absolute;
+      display: block;
+      border-radius: 50%;
+      filter: blur(70px);
+      will-change: transform;
+    }
+
+    .b1 {
+      width: 46vmax; height: 46vmax;
+      background: #7C86FF;
+      top: -10%; left: -8%;
+      opacity: .55;
+      animation: drift1 26s ease-in-out infinite;
+    }
+    .b2 {
+      width: 40vmax; height: 40vmax;
+      background: #B78CFF;
+      top: 38%; left: 50%;
+      opacity: .50;
+      animation: drift2 32s ease-in-out infinite;
+    }
+    .b3 {
+      width: 34vmax; height: 34vmax;
+      background: #6FD3F5;
+      bottom: -14%; left: 6%;
+      opacity: .45;
+      animation: drift3 29s ease-in-out infinite;
+    }
+    .b4 {
+      width: 26vmax; height: 26vmax;
+      background: #FF9ECD;
+      top: 14%; right: -6%;
+      opacity: .38;
+      animation: drift4 34s ease-in-out infinite;
+    }
+    .b5 {
+      width: 22vmax; height: 22vmax;
+      background: #8FE3C8;
+      bottom: 6%; right: 20%;
+      opacity: .38;
+      animation: drift5 30s ease-in-out infinite;
+    }
+
+    @keyframes drift1 {
+      0%, 100% { transform: translate(0, 0) scale(1); }
+      50%      { transform: translate(6vw, 5vh) scale(1.12); }
+    }
+    @keyframes drift2 {
+      0%, 100% { transform: translate(0, 0) scale(1); }
+      50%      { transform: translate(-7vw, 6vh) scale(1.1); }
+    }
+    @keyframes drift3 {
+      0%, 100% { transform: translate(0, 0) scale(1); }
+      50%      { transform: translate(5vw, -6vh) scale(1.14); }
+    }
+    @keyframes drift4 {
+      0%, 100% { transform: translate(0, 0) scale(1); }
+      50%      { transform: translate(-5vw, 7vh) scale(1.08); }
+    }
+    @keyframes drift5 {
+      0%, 100% { transform: translate(0, 0) scale(1); }
+      50%      { transform: translate(6vw, -5vh) scale(1.12); }
+    }
+
+    /* ---- 加载层 ---- */
     .loading {
+      position: fixed;
+      inset: 0;
+      z-index: 10;
       display: flex;
       flex-direction: column;
-      justify-content: center;
       align-items: center;
-      margin: 0;
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      -ms-transform: translate(-50%, -50%);
-      transform: translate(-50%, -50%);
+      justify-content: center;
+      transition: opacity .45s ease;
     }
 
-    .loader {
-      display: block;
+    .loading.fade {
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .panel {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 14px;
+      padding: 30px 40px 26px;
+      border-radius: 22px;
+      background: rgba(255, 255, 255, .55);
+      border: 1px solid rgba(255, 255, 255, .9);
+      box-shadow: 0 18px 50px rgba(30, 41, 59, .10),
+                  0 2px 8px rgba(30, 41, 59, .04);
+      backdrop-filter: blur(22px) saturate(140%);
+      -webkit-backdrop-filter: blur(22px) saturate(140%);
+      animation: rise .6s cubic-bezier(.22, 1, .36, 1) both;
+    }
+
+    @keyframes rise {
+      from { opacity: 0; transform: translateY(12px) scale(.97); }
+      to   { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    /* 品牌渐变 logo */
+    .mark {
+      width: 46px;
+      height: 46px;
+      border-radius: 15px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(135deg, #6366F1 0%, #8B5CF6 100%);
+      box-shadow: 0 10px 24px rgba(99, 102, 241, .30);
+      animation: breathe 2.4s ease-in-out infinite;
+    }
+
+    .mark svg {
+      width: 24px;
+      height: 24px;
+    }
+
+    @keyframes breathe {
+      0%, 100% { transform: translateY(0); box-shadow: 0 10px 24px rgba(99, 102, 241, .26); }
+      50%      { transform: translateY(-3px); box-shadow: 0 16px 30px rgba(99, 102, 241, .36); }
+    }
+
+    .title {
+      font-size: 16.5px;
+      font-weight: 600;
+      letter-spacing: .4px;
+      color: #1E293B;
+    }
+
+    .subtitle {
+      font-size: 12.5px;
+      color: #64748B;
+      animation: pulse 1.8s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: .55; }
+      50%      { opacity: 1; }
+    }
+
+    /* 流光进度条 */
+    .bar {
       position: relative;
-      width: 6px;
-      height: 10px;
-      animation: rectangle infinite 1s ease-in-out -0.2s;
-      background-color: #000;
+      width: 132px;
+      height: 3px;
+      border-radius: 99px;
+      background: rgba(99, 102, 241, .14);
+      overflow: hidden;
+      margin-top: 2px;
     }
 
-    .loader:before,
-    .loader:after {
-      position: absolute;
-      width: 6px;
-      height: 10px;
+    .bar::after {
       content: "";
-      background-color: #000;
+      position: absolute;
+      inset: 0;
+      width: 55%;
+      border-radius: 99px;
+      background: linear-gradient(90deg, rgba(99, 102, 241, 0), #6366F1, #8B5CF6, rgba(139, 92, 246, 0));
+      animation: shimmer 1.5s ease-in-out infinite;
     }
 
-    .loader:before {
-      left: -14px;
-      animation: rectangle infinite 1s ease-in-out -0.4s;
+    @keyframes shimmer {
+      0%   { transform: translateX(-100%); }
+      100% { transform: translateX(180%); }
     }
 
-    .loader:after {
-      right: -14px;
-      animation: rectangle infinite 1s ease-in-out;
-    }
-
-    @keyframes rectangle {
-      0%,
-      80%,
-      100% {
-        height: 20px;
-        box-shadow: 0 0 #000;
-      }
-      40% {
-        height: 30px;
-        box-shadow: 0 -20px #000;
+    @media (prefers-reduced-motion: reduce) {
+      .aurora span, .mark, .subtitle, .bar::after, .panel {
+        animation: none !important;
       }
     }
   </style>
 </head>
 <body>
-<div class="loading">
-  <div class="loader"></div>
-</div>
+  <!-- 极光背景 -->
+  <div class="aurora" aria-hidden="true">
+    <span class="b1"></span>
+    <span class="b2"></span>
+    <span class="b3"></span>
+    <span class="b4"></span>
+    <span class="b5"></span>
+  </div>
+
+  <!-- 加载卡片 -->
+  <div class="loading" id="loading">
+    <div class="panel">
+      <div class="mark">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2"
+             stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <rect x="4" y="10" width="16" height="11" rx="3"></rect>
+          <path d="M8 10V7a4 4 0 0 1 8 0v3"></path>
+        </svg>
+      </div>
+      <div class="title">日志解密助手</div>
+      <div class="subtitle">正在准备解密环境…</div>
+      <div class="bar"></div>
+    </div>
+  </div>
+
   <script src="flutter_bootstrap.js" async></script>
+  <script>
+    (function () {
+      var removed = false;
+      var THEME_KEY = 'decrypt_theme_v1';
+
+      function dismiss() {
+        if (removed) return;
+        removed = true;
+        var el = document.getElementById('loading');
+        if (!el) return;
+        el.classList.add('fade');
+        window.setTimeout(function () {
+          if (el.parentNode) el.parentNode.removeChild(el);
+        }, 460);
+      }
+
+      // 首帧前应用已保存的主题，避免刷新时闪烁
+      (function applyTheme() {
+        var mode = null;
+        try {
+          mode = window.localStorage.getItem(THEME_KEY);
+        } catch (e) {
+          mode = null;
+        }
+        var dark = false;
+        if (mode === 'dark') {
+          dark = true;
+        } else if (mode === 'system' || mode === null) {
+          // 跟随系统（含首次访问）按系统亮度判定
+          dark = window.matchMedia &&
+                 window.matchMedia('(prefers-color-scheme: dark)').matches;
+          if (mode === null) {
+            // 首次访问默认极光（与 App 默认一致），不做深色覆盖
+            dark = false;
+          }
+        } else if (mode === 'minimal') {
+          dark = false;
+        }
+        if (dark) {
+          document.body.classList.add('theme-dark');
+        } else if (mode === 'minimal') {
+          document.body.classList.add('theme-minimal');
+        }
+      })();
+
+      // Flutter 首帧渲染完成后淡出加载层，与应用界面无缝衔接
+      window.addEventListener('flutter-first-frame', dismiss);
+      // 兜底：若事件未触发，15 秒后移除，避免加载层长期滞留
+      window.setTimeout(dismiss, 15000);
+    })();
+  </script>
 </body>
 </html>

@@ -1,11 +1,11 @@
 {
-    "name": "decrypt",
-    "short_name": "decrypt",
+    "name": "日志解密助手",
+    "short_name": "日志解密助手",
     "start_url": ".",
     "display": "standalone",
-    "background_color": "#0175C2",
-    "theme_color": "#0175C2",
-    "description": "日志解压工具",
+    "background_color": "#6366F1",
+    "theme_color": "#6366F1",
+    "description": "加密日志一键解密，本地处理更安全",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [
