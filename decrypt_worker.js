@@ -41,7 +41,7 @@ self.onmessage = function (ev) {
       var padding = CryptoJS.pad.Pkcs7;
 
       var names = Object.keys(gFiles);
-      var total = names.length - 1; // 去掉 info
+      var total = names.length; // 去掉 info
       var done = 0;
       var result = [];
 
