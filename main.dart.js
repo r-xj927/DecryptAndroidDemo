@@ -44446,7 +44446,7 @@ o=s.gaq(0)
 n=A.cu(5)
 m=A.m_(B.x.b_(0.28),0.5)
 l=t.p
-n=A.b([q,B.c9,A.fV(A.dR(A.b([A.cE(A.b([new A.mc(1,B.fQ,p,h),B.bR,A.cA(h,A.bH("v2.0",h,h,A.bA(h,h,B.x,h,h,h,h,h,h,h,h,9.5,h,h,B.aI,h,h,!0,h,0.3,h,h,h,h,h,h),h),B.r,h,h,new A.bC(o.ax,h,m,n,h,h,B.E),h,h,h,B.Es,h,h,h)],l),B.A,B.t,B.a9),A.bH("AI Log Decrypt",1,B.av,A.bA(h,h,s.gaq(0).x,h,h,h,h,h,h,h,h,10,h,h,h,h,h,!0,h,0.6,h,h,h,h,h,h),h)],l),B.ac,B.t,B.T),1)],l)
+n=A.b([q,B.c9,A.fV(A.dR(A.b([A.cE(A.b([new A.mc(1,B.fQ,p,h),B.bR,A.cA(h,A.bH("v2.1",h,h,A.bA(h,h,B.x,h,h,h,h,h,h,h,h,9.5,h,h,B.aI,h,h,!0,h,0.3,h,h,h,h,h,h),h),B.r,h,h,new A.bC(o.ax,h,m,n,h,h,B.E),h,h,h,B.Es,h,h,h)],l),B.A,B.t,B.a9),A.bH("Design by CJ",1,B.av,A.bA(h,h,s.gaq(0).x,h,h,h,h,h,h,h,h,10,h,h,h,h,h,!0,h,0.3,h,h,h,h,h,h),h)],l),B.ac,B.t,B.T),1)],l)
 if(i.w)n.push(A.K4(s.gaq(0).w,h,h,B.Fp,h,h,i.x,h,20,h,h,h))
 q=A.cE(n,B.A,B.t,B.a9)
 p=A.JU(!1,14,40,B.EW,"\u65b0\u5bf9\u8bdd",i.f)

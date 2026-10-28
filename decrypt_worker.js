@@ -41,14 +41,12 @@ self.onmessage = function (ev) {
       var padding = CryptoJS.pad.Pkcs7;
 
       var names = Object.keys(gFiles);
-      var total = names.length; // 去掉 info
+      var total = names.length; // info 也参与解密与进度
       var done = 0;
       var result = [];
 
       for (var i = 0; i < names.length; i++) {
         var name = names[i];
-        if (name === 'info') continue;
-
         var contentBytes = gFiles[name];
         var text = new TextDecoder('utf-8').decode(contentBytes);
         var lines = text.split('\n');
@@ -58,25 +56,51 @@ self.onmessage = function (ev) {
         }
         var parts = [];
 
-        for (var j = 0; j < lines.length; j++) {
-          var line = lines[j];
-          if (line.length === 0) {
+        if (name === 'info') {
+          // info 前 2 行为 RSA 加密的密钥与模式（Dart 端已用私钥解密出密钥），
+          // 其余行为 AES 加密的日志内容，用解密出的密钥逐行解密。
+          var body = lines.slice(2);
+          for (var j = 0; j < body.length; j++) {
+            var line = body[j];
+            if (line.length === 0) {
+              parts.push('\n');
+              continue;
+            }
+            try {
+              var ct = CryptoJS.enc.Base64.parse(line.trim());
+              var d = CryptoJS.AES.decrypt(
+                { ciphertext: ct },
+                key,
+                { mode: mode, padding: padding, iv: iv }
+              );
+              parts.push(d.toString(CryptoJS.enc.Utf8));
+            } catch (e2) {
+              // 解密失败则保留原始 base64 文本（与原逻辑一致）
+              parts.push(line);
+            }
             parts.push('\n');
-            continue;
           }
-          try {
-            var ct = CryptoJS.enc.Base64.parse(line.trim());
-            var d = CryptoJS.AES.decrypt(
-              { ciphertext: ct },
-              key,
-              { mode: mode, padding: padding, iv: iv }
-            );
-            parts.push(d.toString(CryptoJS.enc.Utf8));
-          } catch (e2) {
-            // 解密失败则保留原始 base64 文本（与原逻辑一致）
-            parts.push(line);
+        } else {
+          for (var j = 0; j < lines.length; j++) {
+            var line = lines[j];
+            if (line.length === 0) {
+              parts.push('\n');
+              continue;
+            }
+            try {
+              var ct = CryptoJS.enc.Base64.parse(line.trim());
+              var d = CryptoJS.AES.decrypt(
+                { ciphertext: ct },
+                key,
+                { mode: mode, padding: padding, iv: iv }
+              );
+              parts.push(d.toString(CryptoJS.enc.Utf8));
+            } catch (e2) {
+              // 解密失败则保留原始 base64 文本（与原逻辑一致）
+              parts.push(line);
+            }
+            parts.push('\n');
           }
-          parts.push('\n');
         }
 
         var out = parts.join('');

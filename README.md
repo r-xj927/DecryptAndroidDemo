@@ -4,7 +4,7 @@ DecryptLog（本地文件解密工具）的 Flutter Web 在线版，同时提供
 
 - 在线使用：<https://r-xj927.github.io/DecryptAndroidDemo/>
 - Windows 客户端：[downloads/DecryptLog.exe](downloads/DecryptLog.exe)（安装包，约 10.8 MB）
-- macOS 客户端：[downloads/DecryptLog.dmg](downloads/DecryptLog.dmg)（约 23.9 MB）
+- macOS 客户端：[downloads/DecryptLog.dmg](downloads/DecryptLog.dmg)（约 22.9 MB）
 
 ## 这个仓库是什么
 
@@ -44,6 +44,6 @@ GitHub Pages 约 1 分钟内生效。
 
 ## 技术栈
 
-- Flutter 3.47.8 / Dart 3.13.7，当前版本 v2.0.0
+- Flutter 3.47.8 / Dart 3.13.7，当前版本 v2.1.0
 - 渲染器 CanvasKit（Skia 编译为 WebAssembly，自托管，全浏览器兼容）
 - 桌面客户端：Windows 用 Inno Setup 打包，macOS 发 DMG
