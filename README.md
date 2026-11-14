@@ -3,7 +3,7 @@
 DecryptLog（本地文件解密工具）的 Flutter Web 在线版，同时提供 Windows / macOS 桌面客户端下载。
 
 - 在线使用：<https://r-xj927.github.io/DecryptAndroidDemo/>
-- Windows 客户端：[downloads/DecryptLog.exe](downloads/DecryptLog.exe)（安装包，约 14.6 MB）
+- Windows 客户端：[downloads/DecryptLog.exe](downloads/DecryptLog.exe)（安装包，约 11 MB）
 - macOS 客户端：[downloads/DecryptLog.dmg](downloads/DecryptLog.dmg)（约 24.4 MB）
 
 ## 这个仓库是什么
@@ -33,9 +33,9 @@ flutter build web --release --base-href=/DecryptAndroidDemo/ --no-web-resources-
 - 必须用 PowerShell：Git Bash 的 MSYS 路径转换会把 `/DecryptAndroidDemo/` 参数改坏  
   （非要用 Git Bash 的话得加 `MSYS_NO_PATHCONV=1`）
 
-构建后产物约 78 MB，其中 canvaskit 目录有约 24 MB 是本构建永不加载的变体  
+构建后产物约 75 MB，其中 canvaskit 目录有约 24 MB 是本构建永不加载的变体  
 （skwasm / skwasm_heavy / wimp / webparagraph / *.symbols），部署脚本会自动剪枝，  
-剪枝后约 54 MB。
+剪枝后约 51 MB。
 
 ## 部署
 
