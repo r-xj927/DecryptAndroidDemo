@@ -3,8 +3,8 @@
 DecryptLog（本地文件解密工具）的 Flutter Web 在线版，同时提供 Windows / macOS 桌面客户端下载。
 
 - 在线使用：<https://r-xj927.github.io/DecryptAndroidDemo/>
-- Windows 客户端：[downloads/DecryptLog.exe](downloads/DecryptLog.exe)（安装包，约 10.8 MB）
-- macOS 客户端：[downloads/DecryptLog.dmg](downloads/DecryptLog.dmg)（约 22.9 MB）
+- Windows 客户端：[downloads/DecryptLog.exe](downloads/DecryptLog.exe)（安装包，约 14.6 MB）
+- macOS 客户端：[downloads/DecryptLog.dmg](downloads/DecryptLog.dmg)（约 24.4 MB）
 
 ## 这个仓库是什么
 
@@ -30,11 +30,12 @@ flutter build web --release --base-href=/DecryptAndroidDemo/ --no-web-resources-
 - `--base-href=/DecryptAndroidDemo/`：Pages 项目站点挂在 `/DecryptAndroidDemo/` 子路径下
 - `--no-web-resources-cdn`：canvaskit 自托管。默认构建会从 gstatic CDN 加载 canvaskit，  
   该 CDN 国内基本不可达，不自托管的话国内用户大概率白屏
-- 必须用 PowerShell：Git Bash 的 MSYS 路径转换会把 `/DecryptAndroidDemo/` 参数改坏
+- 必须用 PowerShell：Git Bash 的 MSYS 路径转换会把 `/DecryptAndroidDemo/` 参数改坏  
+  （非要用 Git Bash 的话得加 `MSYS_NO_PATHCONV=1`）
 
-构建后产物约 74 MB，其中 canvaskit 目录有约 23.8 MB 是本构建永不加载的变体  
+构建后产物约 78 MB，其中 canvaskit 目录有约 24 MB 是本构建永不加载的变体  
 （skwasm / skwasm_heavy / wimp / webparagraph / *.symbols），部署脚本会自动剪枝，  
-剪枝后约 49.7 MB。
+剪枝后约 54 MB。
 
 ## 部署
 
@@ -44,6 +45,6 @@ GitHub Pages 约 1 分钟内生效。
 
 ## 技术栈
 
-- Flutter 3.47.8 / Dart 3.13.7，当前版本 v2.1.0
+- Flutter 3.47.8 / Dart 3.13.7，当前版本 v3.0.0
 - 渲染器 CanvasKit（Skia 编译为 WebAssembly，自托管，全浏览器兼容）
 - 桌面客户端：Windows 用 Inno Setup 打包，macOS 发 DMG
