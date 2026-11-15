@@ -45,6 +45,22 @@ GitHub Pages 约 1 分钟内生效。
 
 ## 技术栈
 
-- Flutter 3.47.8 / Dart 3.13.7，当前版本 v3.0.0
+- Flutter 3.50.0 / Dart 3.14.0，当前版本 v3.2.0
 - 渲染器 CanvasKit（Skia 编译为 WebAssembly，自托管，全浏览器兼容）
 - 桌面客户端：Windows 用 Inno Setup 打包，macOS 发 DMG
+
+## 离线可用（Service Worker）
+
+站点用自定义 `web/flutter_bootstrap.js` 把 Flutter loader 指向 `web/sw.js`。
+首次在线访问时会预缓存引擎、两套 CanvasKit、解密 Worker 及其依赖（未压缩约 16MB），
+之后断网也能打开页面并解密日志——私钥本就编译在 `main.dart.js` 里，解密不发任何网络请求。
+
+- 缓存版本取自构建注入的 `serviceWorkerVersion`，每次 build 自动失效旧缓存
+- 刻意不缓存 `downloads/`（34MB 安装包）与 `assets/NOTICES`
+- 占位符 `{{flutter_service_worker_version}}` 替换结果是「带引号的字符串 + 注释」，
+  只能当表达式用，不能嵌进字符串字面量
+- `localhost` / `127.0.0.1` 的 debug dev server 不注册 SW（DDC 模块不在清单里，
+  拦截会干扰热重载）；生产域名才启用
+- **解密结果不做持久化**：会话元数据在 localStorage，正文只在内存中，
+  刷新后需重新解密。日志动辄几百 MB，base64/JSON 副本与刷新时全量读回会拖垮页面
+- 部署脚本全量替换产物时会自动带上 `sw.js` 与自定义 bootstrap，无需额外配置
