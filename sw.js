@@ -47,6 +47,10 @@ const PRECACHE = [
   'assets/AssetManifest.bin.json',
   'assets/FontManifest.json',
   'assets/fonts/MaterialIcons-Regular.otf',
+  // 首屏 MiSans 子集分片（400/700 两字重，合计约 43KB）+ 引擎兜底 Roboto 的本地镜像
+  'fonts/misans-firstscreen.woff2',
+  'fonts/misans-firstscreen-bold.woff2',
+  'fonts/fallback/roboto/v32/KFOmCnqEu92Fr1Me4GZLCzYlKw.woff2',
   'assets/fonts/fallback/Roboto-Regular.ttf',
   'assets/packages/cupertino_icons/assets/CupertinoIcons.ttf',
   'assets/shaders/ink_sparkle.frag',

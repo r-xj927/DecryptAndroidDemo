@@ -36,6 +36,24 @@
        首屏加载界面：与 Flutter 应用内的「浅色液态玻璃 + 极光背景」保持一致
        品牌渐变 #6366F1 -> #8B5CF6，文本 #1E293B / #64748B
        ------------------------------------------------------------------ */
+    /* 首屏只加载 MiSans 的极小分片（两字重合计约 43KB，见
+       scripts/build_web_fonts.py），而不是 15MB 的完整字体。
+       400/700 各一份，标题用 700 真加粗，避免浏览器合成加粗发虚。全程不出网。 */
+    @font-face {
+      font-family: 'MiSans';
+      src: url('fonts/misans-firstscreen.woff2') format('woff2');
+      font-weight: 400;
+      font-style: normal;
+      font-display: swap;
+    }
+    @font-face {
+      font-family: 'MiSans';
+      src: url('fonts/misans-firstscreen-bold.woff2') format('woff2');
+      font-weight: 700;
+      font-style: normal;
+      font-display: swap;
+    }
+
     html, body {
       height: 100%;
       margin: 0;
@@ -43,8 +61,8 @@
     }
 
     body {
-      font-family: -apple-system, BlinkMacSystemFont, "PingFang SC",
-        "Hiragino Sans GB", "Microsoft YaHei", "Segoe UI", Roboto, sans-serif;
+      /* 全局统一 MiSans；sans-serif 仅是字体加载完成前的兜底族。 */
+      font-family: 'MiSans', sans-serif;
       color: #1E293B;
       background: linear-gradient(135deg, #F3F5FD 0%, #FAF8FE 52%, #F1F9FC 100%);
       overflow: hidden;
@@ -213,7 +231,7 @@
 
     .title {
       font-size: 16.5px;
-      font-weight: 600;
+      font-weight: 700;
       letter-spacing: .4px;
       color: #1E293B;
     }
