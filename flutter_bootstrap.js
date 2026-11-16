@@ -10,7 +10,7 @@
 //   任何资源，装了 PWA 断网也打不开，本来也不该用。
 //
 // 注意 1：同 scope 只能有一个 Service Worker，index.html 里不要再 register。
-// 注意 2："28358400" /* Flutter's service worker is deprecated and will be removed in a future Flutter release. */ 替换结果是「带引号的字符串 + 行尾注释」，
+// 注意 2："2187618073" /* Flutter's service worker is deprecated and will be removed in a future Flutter release. */ 替换结果是「带引号的字符串 + 行尾注释」，
 //          只能当表达式使用，不能嵌进字符串字面量里（会生成非法 JS）。
 // 注意 3：flutter run -d chrome 跑的是 DDC 模块，走的不是 main.dart.js，
 //          预缓存清单会全部 404 且拦截会干扰热重载，因此 dev server 不注册 SW。
@@ -57,7 +57,7 @@ if (!window._flutter) {
 _flutter.buildConfig = {"engineRevision":"371f77202a73e8dff57a8b3bff75bca55c090aee","wasmHashes":{"canvaskit.wasm":"f3c2ff164f324217ebe1d84900110e425c0195fc63f34e8b58de842a047e0c1c","chromium/canvaskit.wasm":"e269e717aad848981ed07db8573b4f7923ccd557d2e696f2944f541f4ff3df9f","skwasm.wasm":"8cc8a3a92f5b3b82d3981b068f883cb76fc97b2fe50c0eb12b43515200460841","skwasm_heavy.wasm":"0827476759917a5c67cb54fdb7c625bba341fccfe7508258dfdce78f18ea905e","webparagraph/canvaskit.wasm":"01f0337c620a2afe20b92578ab5ec8db8e5bb6eccdef751d30bac9d1d683988e","wimp.wasm":"f2850c8522fd07ea4406f698f85488aa6b0541cbf9a25e853a241e78ab8c8d1e"},"builds":[{"compileTarget":"dart2js","renderer":"canvaskit","mainJsPath":"main.dart.js"},{}],"useLocalCanvasKit":true};
 
 (function () {
-  const swVersion = "28358400" /* Flutter's service worker is deprecated and will be removed in a future Flutter release. */;
+  const swVersion = "2187618073" /* Flutter's service worker is deprecated and will be removed in a future Flutter release. */;
   const isDev = /^(localhost|127\.0\.0\.1|\[::1\])$/.test(location.hostname);
   // CanvasKit 启动时会强制下载一份 Roboto 作为兜底字形，URL 由引擎的
   // fontFallbackBaseUrl（默认 https://fonts.gstatic.com/s/）+ 固定路径拼成。
@@ -71,11 +71,60 @@ _flutter.buildConfig = {"engineRevision":"371f77202a73e8dff57a8b3bff75bca55c090a
 
   if (isDev || !('serviceWorker' in navigator)) return;
 
+  // 页面本来就在 SW 接管下吗？首次访问（没 controller）不触发重载，
+  // 否则新装好的 SW claim 页面时会白闪一次。
+  const hadController = !!navigator.serviceWorker.controller;
+  let reloading = false;
+
+  // 新版 SW 接管时，如果它和「当前页面构建」不是同一代，说明用户看到的是
+  // 缓存里的旧页面，自动重载一次让新版立即生效（页面本来就是新的则不重载，
+  // 避免每次发布都多刷一遍）。
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    if (!hadController || reloading) return;
+    const controller = navigator.serviceWorker.controller;
+    if (!controller) return;
+    let activeVersion = null;
+    try {
+      activeVersion = new URL(controller.scriptURL).searchParams.get('v');
+    } catch (e) {
+      activeVersion = null;
+    }
+    if (!activeVersion || activeVersion === String(swVersion)) return;
+
+    reloading = true;
+    try {
+      // 防呆：同一会话最多自动重载 2 次，避免极端情况下反复刷新
+      const key = 'decrypt_sw_reloads';
+      const count = Number(window.sessionStorage.getItem(key) || '0');
+      if (count >= 2) return;
+      window.sessionStorage.setItem(key, String(count + 1));
+    } catch (e) {
+      // 隐私模式下 sessionStorage 可能不可用，直接重载
+    }
+    window.location.reload();
+  });
+
   // 用绝对 URL 注册，避免 <base href> 子路径下解析错位置；
-  // ?v= 让学生（sw.js）拿到构建版本号，activate 时清掉旧缓存。
+  // ?v= 让 sw.js 拿到构建版本号，activate 时清掉旧缓存。
+  // updateViaCache: 'none' 让浏览器检查更新时绕过 HTTP 缓存
+  // （GitHub Pages 给所有文件 max-age=600，不绕过就得等 10 分钟）。
   const register = () => {
     const swUrl = new URL('sw.js?v=' + encodeURIComponent(swVersion), document.baseURI).toString();
-    navigator.serviceWorker.register(swUrl).catch((err) => {
+    navigator.serviceWorker.register(swUrl, { updateViaCache: 'none' }).then((registration) => {
+      const checkUpdate = () => {
+        try {
+          registration.update();
+        } catch (e) {
+          // 断网或浏览器不支持时静默失败，下次再说
+        }
+      };
+      checkUpdate();
+      // iOS Safari 不会主动查更新；切后台再回来是最常见的场景，
+      // 这里每次回到前台补一次检查。
+      document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'visible') checkUpdate();
+      });
+    }).catch((err) => {
       console.warn('Service worker registration failed:', err);
     });
   };

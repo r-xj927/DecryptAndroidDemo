@@ -5,6 +5,24 @@
 // 版本号来自注册 URL 的 ?v=...（由 web/flutter_bootstrap.js 注入），
 // 每次 flutter build web 自动变化，activate 时清掉旧缓存。
 //
+// ---------------------------------------------------------------------------
+// 缓存策略（关键：入口文件必须网络优先，否则会「永远更新不到新版本」）
+//
+// Flutter 产物的文件名是固定的（main.dart.js、flutter_bootstrap.js、
+// index.html，都没有内容哈希）。如果把它们也按普通静态资源做缓存优先，
+// 会形成死锁：
+//   旧 SW 缓存优先 → 永远吐旧 index.html
+//   → 旧 HTML 只注册旧版本号的 sw.js?v=...
+//   → 浏览器认为脚本没变，不更新 SW
+//   → 缓存里永远是旧的那一套，刷新多少次都是旧版本
+// iOS Safari 不主动检查 SW 更新，这个死锁尤其顽固。
+//
+// 所以拆成三档：
+//   1. 入口文件（NETWORK_FIRST）：先取网络，超时才回落缓存；
+//   2. version.json：永不缓存，它就是「有没有新版本」的判据；
+//   3. 其余静态资源：缓存优先 + 后台更新（省流量、离线可用）。
+// ---------------------------------------------------------------------------
+//
 // 刻意不缓存：
 //   - downloads/ 下的 34MB 桌面安装包（断网也用不上）
 //   - assets/NOTICES（1.38MB，浏览器本来就不请求）
@@ -13,6 +31,7 @@ const VERSION = new URL(self.location.href).searchParams.get('v') || 'dev';
 const CACHE_NAME = 'decrypt-offline-' + VERSION;
 const CACHE_PREFIX = 'decrypt-offline-';
 const SCOPE = self.registration.scope; // 例：https://xxx.github.io/DecryptAndroidDemo/
+const SCOPE_PATH = new URL(SCOPE).pathname;
 
 // 本地 dev server（flutter run -d chrome）用 DDC 模块，预缓存清单里那些
 // release 文件名根本不存在；拦截请求只会拖慢刷新、干扰热重载。
@@ -20,6 +39,30 @@ const SCOPE = self.registration.scope; // 例：https://xxx.github.io/DecryptAnd
 const IS_DEV = /^(localhost|127\.0\.0\.1|\[::1\])$/.test(self.location.hostname);
 
 const asset = (path) => new URL(path, SCOPE).toString();
+
+// 入口文件：每次发布都可能变、且文件名不带哈希 → 必须网络优先。
+// 超时回落缓存是为了弱网/断网时仍能启动（离线解密是本应用的卖点）。
+const NETWORK_TIMEOUT_MS = 2500;
+const NETWORK_FIRST = new Set([
+  '',                 // scope 根，即 index.html
+  'index.html',
+  'flutter_bootstrap.js',
+  'flutter.js',
+  'main.dart.js',
+  'manifest.json',
+  'decrypt_worker.js',
+  // 资源清单决定字体/图片的真实路径，和 main.dart.js 必须同代，
+  // 否则会出现「新引擎 + 旧清单」的错位。
+  'assets/AssetManifest.bin',
+  'assets/AssetManifest.bin.json',
+  'assets/FontManifest.json',
+  // CanvasKit 同样是无哈希文件名；版本必须和 main.dart.js 对齐，
+  // 否则升级 Flutter 后首屏可能白屏。
+  'canvaskit/canvaskit.js',
+  'canvaskit/canvaskit.wasm',
+  'canvaskit/chromium/canvaskit.js',
+  'canvaskit/chromium/canvaskit.wasm'
+]);
 
 // 两套 CanvasKit 都缓存（约 12.8MB）：Chromium 走 chromium/ 变体，
 // Safari / Firefox 走通用版。
@@ -41,7 +84,6 @@ const PRECACHE = [
   'main.dart.js',
   'manifest.json',
   'favicon.png',
-  'version.json',
   'decrypt_worker.js',
   'fflate.min.js',
   'crypto-js.min.js',
@@ -69,6 +111,114 @@ const PRECACHE = [
   'assets/assets/tray_icon_mac.png'
 ];
 
+// 去掉 scope 前缀，得到 PRECACHE 里那种相对路径；不在 scope 内返回 null。
+function relPath(url) {
+  if (!url.pathname.startsWith(SCOPE_PATH)) return null;
+  return url.pathname.slice(SCOPE_PATH.length);
+}
+
+function isOffline() {
+  try {
+    return self.navigator && self.navigator.onLine === false;
+  } catch (e) {
+    return false;
+  }
+}
+
+// 导航请求统一落到 index.html 这个 key 上：地址栏可能带 ?query 或尾部斜杠差异，
+// 用原始 request 当 key 会缓存出一堆重复条目。
+function isNavigation(request) {
+  return request.mode === 'navigate';
+}
+
+function cacheKeyFor(request, rel) {
+  if (isNavigation(request)) return new Request(asset('index.html'));
+  if (rel) return new Request(asset(rel));
+  return new Request(request.url);
+}
+
+function lookup(cache, request) {
+  const key = isNavigation(request) ? asset('index.html') : request;
+  return cache.match(key, { ignoreSearch: true });
+}
+
+function store(event, cache, request, response, rel) {
+  if (!response || !response.ok || response.type !== 'basic') return;
+  let key;
+  try {
+    key = cacheKeyFor(request, rel);
+  } catch (e) {
+    return;
+  }
+  const put = cache.put(key, response.clone()).catch(() => {});
+  try {
+    event.waitUntil(put);
+  } catch (e) {
+    // respondWith 已经 settle，waitUntil 会抛；放后台跑就行
+  }
+}
+
+function delay(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+async function offlineFallback(cache, request) {
+  if (isNavigation(request)) {
+    const shell = await cache.match(asset('index.html'));
+    if (shell) return shell;
+  }
+  return Response.error();
+}
+
+// 入口文件：网络优先，超时或断网回落缓存（保证离线仍可启动）。
+async function networkFirst(event, request, cache, rel) {
+  const cached = await lookup(cache, request);
+  if (isOffline() && cached) return cached;
+
+  const network = fetch(request, { cache: 'no-cache' }).then((response) => {
+    store(event, cache, request, response, rel);
+    return response;
+  });
+  // 超时后这条链会被丢弃，但缓存仍会补上，下次就是新的了。
+  network.catch(() => {});
+
+  if (!cached) {
+    try {
+      return await network;
+    } catch (e) {
+      return offlineFallback(cache, request);
+    }
+  }
+
+  try {
+    return await Promise.race([
+      network,
+      delay(NETWORK_TIMEOUT_MS).then(() => {
+        throw new Error('network timeout');
+      })
+    ]);
+  } catch (e) {
+    return cached;
+  }
+}
+
+// 其余静态资源：缓存优先 + 后台更新（下一次访问即最新）。
+async function cacheFirst(event, request, cache, rel) {
+  const cached = await lookup(cache, request);
+  const network = fetch(request).then((response) => {
+    store(event, cache, request, response, rel);
+    return response;
+  });
+  network.catch(() => {});
+
+  if (cached) return cached;
+  try {
+    return await network;
+  } catch (e) {
+    return offlineFallback(cache, request);
+  }
+}
+
 self.addEventListener('install', (event) => {
   if (IS_DEV) {
     event.waitUntil(self.skipWaiting());
@@ -79,6 +229,7 @@ self.addEventListener('install', (event) => {
     // 逐个 add：部署脚本剪枝后个别文件可能不存在，任一 404 不能拖垮整批
     await Promise.all(PRECACHE.map(async (path) => {
       try {
+        // cache: 'reload' 绕过 HTTP 缓存，确保装进来的是线上最新版本
         await cache.add(new Request(asset(path), { cache: 'reload' }));
       } catch (e) {
         // 资源缺失或网络中断都忽略，离线时按需回源失败即可
@@ -119,25 +270,26 @@ self.addEventListener('fetch', (event) => {
   // 安装包按需下载，绝不进离线缓存（否则白白吃掉 34MB 配额）
   if (url.pathname.indexOf('/downloads/') !== -1) return;
 
-  event.respondWith((async () => {
-    const cache = await caches.open(CACHE_NAME);
-    const hit = await cache.match(request, { ignoreSearch: true });
-    if (hit) return hit;
+  const rel = relPath(url);
 
-    try {
-      const response = await fetch(request);
-      // 同源的成功响应顺手缓存，覆盖构建后新增的散文件
-      if (response.ok && response.type === 'basic') {
-        await cache.put(request, response.clone());
+  event.respondWith((async () => {
+    // version.json 永不进缓存：它是判断「线上有没有新版本」的唯一依据，
+    // 一旦被缓存就再也看不出新旧了。
+    if (rel === 'version.json') {
+      try {
+        return await fetch(request, { cache: 'no-store' });
+      } catch (e) {
+        return new Response('{}', {
+          headers: { 'content-type': 'application/json' }
+        });
       }
-      return response;
-    } catch (e) {
-      if (request.mode === 'navigate') {
-        const fallback = await cache.match(asset('index.html'));
-        if (fallback) return fallback;
-      }
-      return Response.error();
     }
+
+    const cache = await caches.open(CACHE_NAME);
+    if (rel !== null && NETWORK_FIRST.has(rel)) {
+      return networkFirst(event, request, cache, rel);
+    }
+    return cacheFirst(event, request, cache, rel);
   })());
 });
 
