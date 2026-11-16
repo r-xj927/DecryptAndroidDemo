@@ -22,7 +22,17 @@ const IS_DEV = /^(localhost|127\.0\.0\.1|\[::1\])$/.test(self.location.hostname)
 const asset = (path) => new URL(path, SCOPE).toString();
 
 // 两套 CanvasKit 都缓存（约 12.8MB）：Chromium 走 chromium/ 变体，
-// Safari / Firefox 走通用版。多缓存一份换取「任何浏览器都能离线打开」。
+// Safari / Firefox 走通用版。
+// 但只预缓存「本浏览器真会用到」的那一套：两套加起来约 13MB，首访时在后台
+// 跟 main.dart.js、字体抢带宽，国内访问 GitHub Pages 会明显拖慢首屏。
+// 另一套在换浏览器访问时会按需下载并顺手缓存（fetch 处理器会写缓存），
+// 所以离线能力不受影响。
+const IS_BLINK = navigator.vendor === 'Google Inc.' ||
+  /(?:Edg|OPR|Chrome)\//.test(navigator.userAgent);
+const CANVASKIT_VARIANT = IS_BLINK
+  ? ['canvaskit/chromium/canvaskit.js', 'canvaskit/chromium/canvaskit.wasm']
+  : ['canvaskit/canvaskit.js', 'canvaskit/canvaskit.wasm'];
+
 const PRECACHE = [
   '', // scope 根，即 index.html
   'index.html',
@@ -35,10 +45,7 @@ const PRECACHE = [
   'decrypt_worker.js',
   'fflate.min.js',
   'crypto-js.min.js',
-  'canvaskit/canvaskit.js',
-  'canvaskit/canvaskit.wasm',
-  'canvaskit/chromium/canvaskit.js',
-  'canvaskit/chromium/canvaskit.wasm',
+  ...CANVASKIT_VARIANT,
   'icons/Icon-192.png',
   'icons/Icon-512.png',
   'icons/Icon-maskable-192.png',
@@ -47,6 +54,9 @@ const PRECACHE = [
   'assets/AssetManifest.bin.json',
   'assets/FontManifest.json',
   'assets/fonts/MaterialIcons-Regular.otf',
+  // MiSans 子集（ASCII + 界面文案，两个字重合计约 560KB）
+  'assets/assets/fonts/MiSans-Regular.ttf',
+  'assets/assets/fonts/MiSans-Bold.ttf',
   // 首屏 MiSans 子集分片（400/700 两字重，合计约 43KB）+ 引擎兜底 Roboto 的本地镜像
   'fonts/misans-firstscreen.woff2',
   'fonts/misans-firstscreen-bold.woff2',
