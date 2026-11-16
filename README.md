@@ -45,7 +45,7 @@ GitHub Pages 约 1 分钟内生效。
 
 ## 技术栈
 
-- Flutter 3.50.0 / Dart 3.14.0，当前版本 v3.3.0
+- Flutter 3.50.0 / Dart 3.14.0，当前版本 v3.3.1
 - 渲染器 CanvasKit（Skia 编译为 WebAssembly，自托管，全浏览器兼容）
 - 桌面客户端：Windows 用 Inno Setup 打包，macOS 发 DMG
 

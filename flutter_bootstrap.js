@@ -10,7 +10,7 @@
 //   任何资源，装了 PWA 断网也打不开，本来也不该用。
 //
 // 注意 1：同 scope 只能有一个 Service Worker，index.html 里不要再 register。
-// 注意 2："3360047118" /* Flutter's service worker is deprecated and will be removed in a future Flutter release. */ 替换结果是「带引号的字符串 + 行尾注释」，
+// 注意 2："28358400" /* Flutter's service worker is deprecated and will be removed in a future Flutter release. */ 替换结果是「带引号的字符串 + 行尾注释」，
 //          只能当表达式使用，不能嵌进字符串字面量里（会生成非法 JS）。
 // 注意 3：flutter run -d chrome 跑的是 DDC 模块，走的不是 main.dart.js，
 //          预缓存清单会全部 404 且拦截会干扰热重载，因此 dev server 不注册 SW。
@@ -57,7 +57,7 @@ if (!window._flutter) {
 _flutter.buildConfig = {"engineRevision":"371f77202a73e8dff57a8b3bff75bca55c090aee","wasmHashes":{"canvaskit.wasm":"f3c2ff164f324217ebe1d84900110e425c0195fc63f34e8b58de842a047e0c1c","chromium/canvaskit.wasm":"e269e717aad848981ed07db8573b4f7923ccd557d2e696f2944f541f4ff3df9f","skwasm.wasm":"8cc8a3a92f5b3b82d3981b068f883cb76fc97b2fe50c0eb12b43515200460841","skwasm_heavy.wasm":"0827476759917a5c67cb54fdb7c625bba341fccfe7508258dfdce78f18ea905e","webparagraph/canvaskit.wasm":"01f0337c620a2afe20b92578ab5ec8db8e5bb6eccdef751d30bac9d1d683988e","wimp.wasm":"f2850c8522fd07ea4406f698f85488aa6b0541cbf9a25e853a241e78ab8c8d1e"},"builds":[{"compileTarget":"dart2js","renderer":"canvaskit","mainJsPath":"main.dart.js"},{}],"useLocalCanvasKit":true};
 
 (function () {
-  const swVersion = "3360047118" /* Flutter's service worker is deprecated and will be removed in a future Flutter release. */;
+  const swVersion = "28358400" /* Flutter's service worker is deprecated and will be removed in a future Flutter release. */;
   const isDev = /^(localhost|127\.0\.0\.1|\[::1\])$/.test(location.hostname);
   // CanvasKit 启动时会强制下载一份 Roboto 作为兜底字形，URL 由引擎的
   // fontFallbackBaseUrl（默认 https://fonts.gstatic.com/s/）+ 固定路径拼成。
