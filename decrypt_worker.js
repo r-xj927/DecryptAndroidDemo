@@ -294,12 +294,16 @@ function makeEntryHandler(name) {
       blobs.push(new Blob(parts, { type: 'text/plain;charset=utf-8' }));
     }
     var blob = new Blob(blobs, { type: 'text/plain;charset=utf-8' });
-    var url = URL.createObjectURL(blob);
+    // 千万不要在这里 URL.createObjectURL(blob)。
+    // WebKit（iOS Safari）把 blob URL 登记在「创建它的执行上下文」里，
+    // Worker 里造的 blob: 链接在主线程解析不到，点下载就是死链（下载失败/白屏）。
+    // 直接把 Blob 发回主线程：结构化克隆对 Blob 只传引用，不复制内容，
+    // 内存开销和传 URL 一样小，由页面自己创建 objectURL。
     self.postMessage({
       type: 'fileDone',
       name: name,
       size: blob.size,
-      url: url,
+      blob: blob,
       preview: preview,
       isPreview: previewTruncated
     });
